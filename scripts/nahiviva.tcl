@@ -1,5 +1,5 @@
-variable version        "0.12"
-variable date           "H31/4/30"
+variable version        "0.14"
+variable date           "H31/5/1"
 variable create_script  "create_project.tcl"
 
 proc print_help {} {
@@ -156,7 +156,17 @@ proc NahiRun {args} {
 	return 1
 }
 
+proc _NahiUserLock { {lock 1} } {
+	foreach cell [get_bd_cells] {
+		set_property LOCK_UPGRADE $lock [get_bd_cells $cell]
+	}
+}
+
 proc NahiUpdate { } {
+	foreach cell [get_bd_cells] {
+		set_property LOCK_UPGRADE 0 [get_bd_cells $cell]
+	}
+
 	update_ip_catalog -rebuild -repo_path [get_property  ip_repo_paths [current_project]]
 	report_ip_status 
 	foreach ip [get_ips] {
