@@ -1,2 +1,2 @@
 call SETTINGS.CMD
-%VIVADO_PATH%\%VIVADO_VERSION%\bin\vivado.bat -mode tcl -nolog -nojournal -source scripts/tkdnscript.tcl -tclargs open
+%VIVADO_PATH%\%VIVADO_VERSION%\bin\vivado.bat -mode tcl -nolog -nojournal -source scripts/nahiviva.tcl -tclargs open
