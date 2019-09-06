@@ -1,11 +1,11 @@
-variable version        "0.16"
-variable date           "H31/5/7"
+variable version        "0.17"
+variable date           "2019/9/7"
 variable create_script  "create_project.tcl"
 
 proc print_help {} {
   variable script_file
   puts {Description:}
-  puts {  ‚±‚ê‚ÍVivado‚Ì‡¬‚âIPƒAƒbƒvƒf[ƒg‚ğ©“®‰»‚·‚éƒXƒNƒŠƒvƒg‚Å‚·}
+  puts {  ã“ã‚Œã¯Vivadoã®åˆæˆã‚„IPã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆã‚’è‡ªå‹•åŒ–ã™ã‚‹ã‚¹ã‚¯ãƒªãƒ—ãƒˆã§ã™}
   puts {Syntax:}
   puts {  NahiRun [<option>]      Synth and Impl active run.}
   puts {  NahiUpdate              Refresh IP catalog and update IP core.}
@@ -15,7 +15,7 @@ proc print_help {} {
 }
 
 proc _NahiSearchProject {} {
-	# Œ»İ‚ÌƒfƒBƒŒƒNƒgƒŠ‚ğ’Tõ
+	# ç¾åœ¨ã®ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’æ¢ç´¢
 	set dirs [glob *]
 	foreach path $dirs {
 		if [file isfile $path] {
@@ -24,11 +24,11 @@ proc _NahiSearchProject {} {
 			}
 		}
 	}
-	# ƒTƒuƒfƒBƒŒƒNƒgƒŠ‚ğ’Tõ
+	# ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’æ¢ç´¢
 	foreach path $dirs {
 		if [file isdirectory $path] {
-			if {[string index $path 0] == "."} {continue} #.‚Ån‚ß‚éƒfƒBƒŒƒNƒgƒŠ‚Í’²‚×‚È‚¢
-			if {$path == "ip_repo"} {continue} #ip_repo‚Í’²‚×‚È‚¢
+			if {[string index $path 0] == "."} {continue} #.ã§å§‹ã‚ã‚‹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã¯èª¿ã¹ãªã„
+			if {$path == "ip_repo"} {continue} #ip_repoã¯èª¿ã¹ãªã„
 			set subdirs [glob ${path}/*]
 			foreach subpath $subdirs {
 				if [file isfile $subpath] {
@@ -60,11 +60,11 @@ proc _NahiOpenProject {{type ""}} {
 	open_project $project_file
 
 	if {$type == "gui"} {
-		puts "GUI‚ÅŠJ‚«‚Ü‚·"
+		puts "GUIã§é–‹ãã¾ã™"
 		start_gui
 	}
 
-	if {[get_bd_designs] == {} } { # BD‚ªŠJ‚©‚ê‚Ä‚¢‚È‚©‚Á‚½‚çŠJ‚­
+	if {[get_bd_designs] == {} } { # BDãŒé–‹ã‹ã‚Œã¦ã„ãªã‹ã£ãŸã‚‰é–‹ã
 		_NahiOpenFirstBD
 	}
 
@@ -72,13 +72,14 @@ proc _NahiOpenProject {{type ""}} {
 }
 
 proc NahiRun {args} {
-	# current_run‚©‚çŒ»İ‚Ìimpl‚Ì–¼‘O‚ğ“¾‚é
+	# current_runã‹ã‚‰ç¾åœ¨ã®implã®åå‰ã‚’å¾—ã‚‹
 	set report 0
+	set synth_only 0
 	set run_name [current_run]
 	set run [get_runs $run_name]
 	if {[get_property IS_IMPLEMENTATION $run] == 1} {
 		set impl $run_name;
-		# synth‚Ì–¼‘O‚Íimpl‚ÌPARENT‚É“ü‚Á‚Ä‚¢‚é
+		# synthã®åå‰ã¯implã®PARENTã«å…¥ã£ã¦ã„ã‚‹
 		set synth [get_property PARENT $run]
 	}
 
@@ -89,38 +90,50 @@ proc NahiRun {args} {
 			puts "     -update      Update IP before Synthsize"
 			puts "     -restart     Reset Run and Restart"
 			puts "     -report      Open Implementation and make reports."
+			puts "     -synth       Run synth."
 			puts "     -help        Show this help"
 		}
 		if {$op == "-update"} {
-			puts "ƒRƒA‚ğXV‚µ‚Ü‚·"
+			puts "ã‚³ã‚¢ã‚’æ›´æ–°ã—ã¾ã™"
 			NahiUpdate
 		}
 		if {$op == "-restart"} {
-			puts "RUN‚ğ‰Šú‰»‚µ‚Ü‚·"
+			puts "RUNã‚’åˆæœŸåŒ–ã—ã¾ã™"
 			reset_runs $synth
 			reset_runs $impl
+		}
+		if {$op == "-synth"} {
+			puts "Synthã¾ã§å®Ÿè¡Œã—ã¾ã™"
+			set synth_only 1
 		}
 		if {$op == "-report"} {
 			set $report 1
 		}
 	}
 
+	_NahiOpenFirstBD
+	update_compile_order -fileset sources_1
+
 	set obj [get_runs $synth]
 	set needs [get_property NEEDS_REFRESH $obj]
 	set prog [get_property PROGRESS $obj]
 	if {($needs == 0 && $prog == "100%")} {
 		puts "-------------------------------------------------------------------------"
-		puts "˜_—‡¬‚Ì•K—v‚Í‚ ‚è‚Ü‚¹‚ñ"
+		puts "è«–ç†åˆæˆã®å¿…è¦ã¯ã‚ã‚Šã¾ã›ã‚“"
 		puts "-------------------------------------------------------------------------"
 	} else {
-		puts "-------------------------------------------------------------------------"
-		puts "˜_—‡¬‚ğŠJn‚µ‚Ü‚·"
-		puts "-------------------------------------------------------------------------"
 		reset_runs $synth
-		launch_runs $synth
+		puts "-------------------------------------------------------------------------"
+		puts "è«–ç†åˆæˆã‚’é–‹å§‹ã—ã¾ã™"
+		puts "-------------------------------------------------------------------------"
+		launch_runs $synth -jobs 4
+		if {($synth_only == 1)} {
+			return 0
+		}
+		after 8000
 		wait_on_run $synth
 		if {[get_property PROGRESS [get_runs $synth]] != "100%"} {
-			error "ERROR: ˜_—‡¬ $synth ‚É¸”s‚µ‚Ü‚µ‚½"
+			error "ERROR: è«–ç†åˆæˆ $synth ã«å¤±æ•—ã—ã¾ã—ãŸ"
 			return 0
 		}
 	}
@@ -130,17 +143,17 @@ proc NahiRun {args} {
 	set prog [get_property PROGRESS $obj]
 	if {($needs == 0 && $prog == "100%")} {
 		puts "-------------------------------------------------------------------------"
-		puts "”z’u”zü‚Ì•K—v‚Í‚ ‚è‚Ü‚¹‚ñ"
+		puts "é…ç½®é…ç·šã®å¿…è¦ã¯ã‚ã‚Šã¾ã›ã‚“"
 		puts "-------------------------------------------------------------------------"
 	} else {
 		puts "-------------------------------------------------------------------------"
-		puts "”z’u”zü‚ğŠJn‚µ‚Ü‚·"
+		puts "é…ç½®é…ç·šã‚’é–‹å§‹ã—ã¾ã™"
 		puts "-------------------------------------------------------------------------"
 		reset_runs $impl
 		launch_runs $impl
 		wait_on_run $impl
 		if {[get_property PROGRESS [get_runs $impl]] != "100%"} {
-			error "ERROR: ”z’u”zü $impl ‚É¸”s‚µ‚Ü‚µ‚½"
+			error "ERROR: é…ç½®é…ç·š $impl ã«å¤±æ•—ã—ã¾ã—ãŸ"
 			return 0
 		}
 	}
@@ -154,14 +167,15 @@ proc NahiRun {args} {
 	}
 
 	puts "-------------------------------------------------------------------------"
-	puts "ƒrƒbƒgƒXƒgƒŠ[ƒ€‚ğ¶¬‚µ‚Ü‚·"
+	puts "ãƒ“ãƒƒãƒˆã‚¹ãƒˆãƒªãƒ¼ãƒ ã‚’ç”Ÿæˆã—ã¾ã™"
 	puts "-------------------------------------------------------------------------"
 	launch_runs $impl -to_step write_bitstream -job 4
 	wait_on_run $impl
 
 	set bitsteam_dir [get_property DIRECTORY [current_run]]
 	set bitfile [file join $bitsteam_dir "[get_property top [get_filesets sources_1]].bit"]
-	file copy -force $bitfile [file join ../ $project_directory]
+	file copy -force $bitfile [string range $project_directory 0 [string last "/" $project_directory"]]
+	puts "copy bitfile to [string range $project_directory 0 [string last "/" $project_directory"]]"
 	
 	return 1
 }
@@ -187,7 +201,10 @@ proc _NahiUserLock { {lock 1} } {
 
 proc NahiUpdate { } {
 	foreach cell [get_bd_cells] {
-		set_property LOCK_UPGRADE 0 [get_bd_cells $cell]
+		set plist [list_property [get_bd_cells $cell]]
+		if {[lsearch $plist LOCK_UPGRADE] >= 0} {
+			set_property LOCK_UPGRADE 0 [get_bd_cells $cell]
+		}
 	}
 
 	update_ip_catalog -rebuild -repo_path [get_property  ip_repo_paths [current_project]]
@@ -230,6 +247,7 @@ proc NahiPackage {} {
 #	update_compile_order -fileset sources_1
 	set new_version [expr [get_property core_revision [ipx::current_core]]+1]
 	set_property core_revision $new_version [ipx::current_core]
+	ipx::merge_project_changes files [ipx::current_core]
 	ipx::update_source_project_archive -component [ipx::current_core]
 	ipx::create_xgui_files [ipx::current_core]
 	ipx::merge_project_changes ports [ipx::current_core]
@@ -242,16 +260,16 @@ proc NahiSave {} {
 	set project_directory [get_property DIRECTORY [current_project]]
 	set script_dir [file join ${project_directory} "../"]
 	puts $script_dir
-	if {[get_bd_designs] == {} } { # BD‚ªŠJ‚©‚ê‚Ä‚¢‚È‚©‚Á‚½‚çŠJ‚­
+	if {[get_bd_designs] == {} } { # BDãŒé–‹ã‹ã‚Œã¦ã„ãªã‹ã£ãŸã‚‰é–‹ã
 		_NahiOpenFirstBD
 	}
 	set bd_name [lindex [get_bd_designs] 0]
 	
 	write_bd_tcl -force [file join $script_dir ./src/${bd_name}_bd.tcl]
 
-	# ¶¬‚³‚ê‚½ƒXƒNƒŠƒvƒg‚ğ‘‚«Š·‚¦‚Ä‘}“ü‚·‚é
+	# ç”Ÿæˆã•ã‚ŒãŸã‚¹ã‚¯ãƒªãƒ—ãƒˆã‚’æ›¸ãæ›ãˆã¦æŒ¿å…¥ã™ã‚‹
 	set orig_script_file [file join $script_dir create_project_orig.tcl]
-	set script_file [file join $script_dir create_project.tcl]
+	set script_file [file join $script_dir ./src/create_project.tcl]
 	write_project_tcl -use_bd_files -force $orig_script_file
 
 	set rfd [open $orig_script_file]
@@ -286,6 +304,41 @@ proc NahiSave {} {
 	puts "INFO: NahiSave has done successfully."
 }
 
+proc NahiConfigByComments {} {
+	set keys [list_property [current_bd_design]]
+	foreach {w} $keys {
+		if {[string last {USER_COMMENTS.} $w] != -1} {
+			set comment [get_property $w [current_bd_design]]
+			set keyword {CONFIGS:}
+			if {[string first $keyword $comment] != -1} {
+				set commentlen [string length $comment]
+				set contents [string range $comment [string length $keyword] $commentlen]
+				set contents_list [split $contents ","]
+				foreach {item} $contents_list {
+					if {[string first {=} $item] != -1} {
+						set keyval [split $item {=}]
+						set key [lindex $keyval 0]
+						set val [lindex $keyval 1]
+						puts "ProcessComment:$key <= $val"
+						set allcells [get_bd_cells -hierarchical]
+						foreach {cell} $allcells {
+							if {[string first "xilinx.com:ip" [get_property VLNV [get_bd_cells $cell]]] == -1} {
+								set props [list_property [get_bd_cells $cell]]
+								foreach {prop} $props {
+									if {[string first $prop "CONFIG.$key"] != -1} {
+										puts "change $cell : $prop <= $val"
+										set_property $prop $val [get_bd_cells $cell]
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 proc _NahiInit {} {
 	variable version
 	variable date
@@ -294,7 +347,7 @@ proc _NahiInit {} {
 	puts " ######################################################################"
 	puts "   Nahitafu Vivado Utility Script                                      "
 	puts "    Version $version $date" 
-	puts "   (C)2019 ‚È‚Ğ‚½‚Ó  Twitter:@nahitafu"
+	puts "   (C)2019 ãªã²ãŸãµ  Twitter:@nahitafu"
 	puts " ######################################################################"
 	print_help
 	
@@ -304,32 +357,44 @@ proc _NahiInit {} {
 			if {$option == "delete_project"} {
 				set project [_NahiSearchProject]
 				if {$project == ""} {
-					puts "ƒvƒƒWƒFƒNƒg‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ"
+					puts "ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“"
 					after 2000
 					exit
 				}
 				set project_dir [file normalize [file dirname $project]]
 				puts "--------------------------------------------------------------------" 
-				puts "ƒfƒBƒŒƒNƒgƒŠ ${project_dir} ‚ğíœ‚µ‚Ü‚·‚©H (y/N)" 
+				puts "ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª ${project_dir} ã‚’å‰Šé™¤ã—ã¾ã™ã‹ï¼Ÿ (y/N)" 
 				set keyin [gets stdin]
 				if {$keyin == "y"} {
-					puts "$project_dir‚ğíœ‚µ‚Ü‚·"
+					puts "$project_dirã‚’å‰Šé™¤ã—ã¾ã™"
 					file delete -force $project_dir
-					puts ".Xil‚ğíœ‚µ‚Ü‚·"
+					puts ".Xilã‚’å‰Šé™¤ã—ã¾ã™"
 					file delete -force ".Xil"
 					after 2000
 					exit
 				} else {
-					puts "íœ‚Í’†~‚³‚ê‚Ü‚µ‚½"
+					puts "å‰Šé™¤ã¯ä¸­æ­¢ã•ã‚Œã¾ã—ãŸ"
 					after 2000
 					exit
 				}
 			}
+			if {$option == "build"} {
+				if {[_NahiOpenProject] == 0} {
+					source [file join "src/" $create_script]
+					if { [catch {current_project}] } { 
+						puts "ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã®ç”Ÿæˆã«å¤±æ•—ã—ã¾ã—ãŸ"
+						after 2000
+						exit 0
+					}
+				}
+				NahiRun -update -restart -synth
+				puts "end"
+			}
 			if {$option == "open"} {
 				if {[_NahiOpenProject] == 0} {
-					source $create_script
+					source [file join "src/" $create_script]
 					if { [catch {current_project}] } { 
-						puts "ƒvƒƒWƒFƒNƒg‚Ì¶¬‚É¸”s‚µ‚Ü‚µ‚½"
+						puts "ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã®ç”Ÿæˆã«å¤±æ•—ã—ã¾ã—ãŸ"
 						after 2000
 						exit 0
 					}
@@ -338,9 +403,9 @@ proc _NahiInit {} {
 			if {$option == "opengui"} {
 				if {[_NahiOpenProject gui] == 0} {
 					start_gui
-					source $create_script
+					source [file join "src/" $create_script]
 					if { [catch {current_project}] } { 
-						puts "ƒvƒƒWƒFƒNƒg‚Ì¶¬‚É¸”s‚µ‚Ü‚µ‚½"
+						puts "ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã®ç”Ÿæˆã«å¤±æ•—ã—ã¾ã—ãŸ"
 						after 2000
 						exit 0
 					}
