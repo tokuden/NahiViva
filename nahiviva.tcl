@@ -1,5 +1,5 @@
-variable version        "0.18"
-variable date           "R1/9/7"
+variable version        "0.20"
+variable date           "2021/2/15"
 variable create_script  "create_project.tcl"
 
 proc print_help {} {
@@ -7,11 +7,13 @@ proc print_help {} {
   puts {Description:}
   puts {  これはVivadoの合成やIPアップデートを自動化するスクリプトです}
   puts {Syntax:}
-  puts {  NahiRun [<option>]      Synth and Impl active run.}
+  puts {  NahiRun [<option>]      Synth and Impl active run. Use -help to read option.}
   puts {  NahiUpdate              Refresh IP catalog and update IP core.}
   puts {  NahiChild [<name>]      Open and edit IP core project.}
   puts {  NahiPackage             Re-Package IP. (use in IP core project)}
   puts {  NahiSave                Write tcl to re-create project.}
+  puts {  NahiConfigByComments    Update parameter of IP by comment.}
+  puts {  NahiGenMcs              Generate MCS file for (Q)SPI-ROM.}
 }
 
 proc _NahiSearchProject {} {
@@ -218,7 +220,7 @@ proc NahiUpdate { } {
 	report_ip_status -name ip_status 
 }
 
-proc _NahiShowAllProperty {{objname ""}} {
+proc NahiShowAllProperty {{objname ""}} {
 	if {$objname == ""}  {
 		set obj [current_project]
 	} else {
@@ -349,6 +351,101 @@ proc NahiConfigByComments {} {
 			}
 		}
 	}
+}
+
+proc NahiGenMcs {args} {
+	set interface "SPIx2"
+	set size "32"
+	set filename ""
+
+	foreach op $args {
+		if {$op == "-help"} {
+			puts {NahiGenMcs [<option>] [<filename>]}
+			puts "Option:"
+			puts "     -x1              Use SPIx1 configuration"
+			puts "     -x2              Use SPIx2 configuration (default)"
+			puts "     -qspi            Use QSPI configuration"
+			puts "     -4m              Specify ROM size limit to 4MByte (32Mbit)."
+			puts "     -8m              Specify ROM size limit to 8MByte (64Mbit)."
+			puts "     -16m             Specify ROM size limit to 16MByte (128Mbit)."
+			puts "     -32m             Specify ROM size limit to 32MByte (256Mbit)."
+			puts "     -64m             Specify ROM size limit to 64MByte (512Mbit)."
+			puts "     -128m            Specify ROM size limit to 128MByte (1024Mbit)."
+			puts "     -help            Show this help"
+			puts "     filename         Specify filename"
+		}
+		if {$op == "-x1"} {
+			set interface "SPIx1"
+			continue
+		}
+		if {$op == "-x2"} {
+			set interface "SPIx2"
+			continue
+		}
+		if {$op == "-qspi"} {
+			set interface "SPIx4"
+			continue
+		}
+		if {$op == "-4m"} {
+			incr i
+			set size 4
+			continue
+		}
+		if {$op == "-8m"} {
+			incr i
+			set size 8
+			continue
+		}
+		if {$op == "-16m"} {
+			incr i
+			set size 16
+			continue
+		}
+		if {$op == "-32m"} {
+			incr i
+			set size 32
+			continue
+		}
+		if {$op == "-64m"} {
+			incr i
+			set size 64
+			continue
+		}
+		if {$op == "-128m"} {
+			incr i
+			set size 128
+			continue
+		}
+		set filename $op
+	}
+	set run_name [current_run]
+	set run [get_runs $run_name]
+	set project_directory [get_property DIRECTORY [current_project]]
+	set bitsteam_dir [get_property DIRECTORY [current_run]]
+	set bitfile [file join $bitsteam_dir "[get_property top [get_filesets sources_1]].bit"]
+	set top_dir [string range $project_directory 0 [string last "/" $project_directory"]]
+	set project_name [get_property NAME [current_project]]
+	if {$filename == ""} {
+		set mcs_file [file join $top_dir $project_name.mcs]
+	} else {
+		set mcs_file [file join $top_dir $filename.mcs]
+	}
+	
+#	set command "-force -format MCS -interface $interface -size $size -loadbit \"up 0x0 $bitfile\" -file $mcs_file"
+	set command "-format MCS"
+	puts "write_cfgmem $command"
+	
+	write_cfgmem -force -format MCS -interface $interface -size $size -loadbit "up 0x0 $bitfile" -file $mcs_file
+}
+
+
+proc NahiCopyBit {args} {
+	set project_directory [get_property DIRECTORY [current_project]]
+	set bitsteam_dir [get_property DIRECTORY [current_run]]
+	set bitfile [file join $bitsteam_dir "[get_property top [get_filesets sources_1]].bit"]
+	set top_dir [string range $project_directory 0 [string last "/" $project_directory"]]
+	file copy -force $bitfile $top_dir
+	puts "Copy $bitfile to $top_dir"
 }
 
 proc _NahiInit {} {

@@ -1,104 +1,137 @@
 # NahiViva (なひビバ)
-Vivadoの操作を自動化します。
-論理合成や配置配線だけではなく、子IPを更新した際のReport->Report IP StatusからUpdate Selectedと
-それに続くダイアログのキャンセルなど、面倒な操作をスクリプトでできるようにします。
-- Tclで保存されたプロジェクトの読み込み
-- 論理合成と配置配線
-- 子IPのUpdate処理
-- 子IPを新規Vivadoで開く
-- 子IPのRePackage作業
-- プロジェクトをTcl形式で保存
+Vivadoを使っていて、次のような悩みはないですか？
 
-# Dependency
-- XILINX Vivado 2018.3 (他のバージョンでも可)
-Windows 10で動作確認済み
+<span style="font-size: 150%;">
+「このプロジェクトはVivado 2018.3用なんだけど、わざわざ古いVivadoをスタートメニューから開くのが面倒くさいな」
 
-# 使い方
-このスクリプトには2つの使い方があります。
-1つ目は論理合成や子IPのアップデートの機能だけを使う方法。もう一つはこのスクリプトにプロジェクトの管理をすべて任せる方法です。
-まずは、簡単な論理合成とIPのアップデートだけを使う方法を説明します。
-## セットアップ (簡単版)
-まず、githubから全体をダウンロードするか、下記のスクリプトのみをダウンロードします。
-https://raw.githubusercontent.com/tokuden/NahiViva/master/scripts/nahiviva.tcl
-(右クリックでファイル保存してください。)
+「Update IPの作業って、どうしてこんなに何度も何度もクリックしなきゃいけないの？」
 
-そして、Vivadoのプロジェクトがある任意のフォルダにnahiscript.tclを保存します。
+「MCSファイルって、どうやって作るんだっけ」
 
-## 起動
-Vivadoを起動したら、Tclコンソールに
-source nahiviva.tcl
-と入力します。人によっては../nahiviva.tclだったり、scripts/nahiviva.tclだったり違うフォルダに置いているかもしれません。
-[Nahiviva_3]
+「gitでプロジェクトを管理したいけど、ブロックデザインもプロジェクトもバイナリだから相性が悪いな」
 
-これで、使用する準備が整いました。
-## 子IPの更新
-Vivadoで子IPを更新したら、憎きこの通知が出るでしょう。↓
-[Nahiviva_4]
+「テレワークしようと会社のファイルを家に持って帰ってきたけど、ディレクトリ関係が変わってやりにくい」
 
-普通ならRefresh IP Catalogを押して、ReRunを押して、Upgrade Selectedを押して、Generate Output ProductsのダイアログでSkipを押して、再度ReRunを押すという面倒なプロセスが待っているのですが、
+「そもそもBitStreamってどこにあるの？」
 
-[Nahiviva_5][Nahiviva_6]
+「お客さんに300Mバイトのプロジェクトをメールで送ったら怒られた」
 
-これからは、tclコンソールで、
-''NahiUpdate''
-と入力するだけです。(NahiUまででOK)
+</span>
 
-[Nahiviva_7]
+NahiVivaはそんな悩みを解決する、Vivadoの操作のための便利Tclライブラリです。
 
-上の一連の操作をスクリプトが自動的に行います。面倒なダイアログでボタンを押す必要もありません。
+主に次のようなことがコマンド一発でできます。
 
-## ビルド(論理合成と配置配線)
+* [論理合成・配置配線の実行](#NahiRun　(論理合成・配置配線))
+* [Update-IP作業の自動化](#NahiUpdate (IPのアップデート))
+* [SPI-ROM用のMCSファイル生成](#NahiGenMcs (MCSファイルの作成))
+* [Vivadoのバージョンを指定して起動](#起動方法)
+* [コメントを利用したIPの一括カスタマイズ](#NahiConfigByComments (コメントからのIPカスタマイズ))
+* [BitStreamを見つけやすいフォルダにコピー](#NahiCopyBit (Bitファイルを表に出す))
+* [Tcl形式でのプロジェクト保存](#NahiSave (アーカイブ保存))
 
-論理合成と配置配線およびBitStreamの生成は、Tclコンソールに
-''NahiRun [オプション]''
-と入力するだけでできます。
+# 動作環境
+- XILINX Vivado 2017.4 2018.1 2018.2 2018.3 2018.4 2019.1 2019.2 2020.1 2020.2
+- Windows 10で動作確認済み (Linuxはまた別途)
 
-下の図のように複数のRUNが存在している場合でも、アクティブなRUNを探して自動的に実行してくれます。
-常にRUNを最初からやり直すのではなく、途中までできている場合には途中から開始します。(もちろん最初からやり直すこともできる)
+# セットアップ
+VivadoのXPRファイルがあるフォルダの1つ上のフォルダに、NahiVivaのファイル一式を置きます。  
+（少なくともnahiviva.tcl、open_project_gui.cmd、SETTINGS.CMDの3つがあれば動作可能）
 
-[Nahiviva_8]
+インストールされているVivadoに合わせて、SETTINGS.CMDを編集します。
 
-## オプションには以下のようなものがあります。
+```SETTINGS.CMD
+@SET VIVADO_PATH=D:\Xilinx\Vivado\
+@SET VIVADO_VERSION=2019.2
+```
+ここで設定したパスの、指定したバージョンのVivadoを使用するようになります。
 
- - -update  コアの更新も一緒に行う
- - -restart  Runをリセットして、最初から開始する
- - -report   使用率、タイミング、IOのレポートを作成する
+# 起動方法
 
-終了したらBitStreamファイルをプロジェクトのフォルダの上までコピーします。
+open_project_gui.cmdをクリックします。  
+フォルダ内でVivadoのプロジェクトを探し、Vivadoが起動します。
 
-Vivadoは生成したBitStreamを<project>\<project_1.runs>\<impl_x>\という深いフォルダに保存してしまうので、とても探しにくくなります。また、Runをリセットしたり再度Runするとbitファイルが消されてしまいます。
-このスクリプトは<project>のディレクトリまでコピーするので、
- - bitファイルが探しやすくなる
- - 再度Runしたときにも前のbitファイルが消されない
-というメリットもあります。
+## 動作中のVivadoから読み込む方法
 
-## プロジェクトを開く
+Tclコンソールからsourceコマンドを使って、nahiviva.tclを読み込んでください。ファイルのパスにご注意ください。
+```
+source ./nahiviva.tcl
+```
 
-DOSのバッチファイルからプロジェクトを開くこともできます。
-レポジトリをダウンロードしたら、これらのファイルをVivadoのプロジェクトのあるフォルダか、その一つ上のフォルダに置きます。
+# 様々な便利コマンド
 
-[Nahiviva_9]
+VivadoのTclコンソールに以下のコマンドを入力することで、様々な強化機能が使えるようになります。
 
-そして、SETTINGS.CMDを編集します。SETTINGS.CMDの内容は
+## NahiRun　(論理合成・配置配線)
+このコマンドは、Vivadoの論理合成を行います。
+```
+NahiRun [オプション]
+```
+オプションに-updateを指定した場合は、Update IPの動作を一緒に行います。
 
-'''@SET VIVADO_PATH=D:\Xilinx\Vivado\
-@SET VIVADO_VERSION=2018.3'''
+オプションに-restartを指定した場合は、論理合成済みであっても、最初から論理合成と配置配線を行います。
 
-という簡単なものですが、ここにVivadoをインストールしたフォルダのパスと、Vivadoのリビジョンを設定します。
+オプションに-synthを指定した場合は、論理合成のみ行い、配置配線は行いません。
 
-そして、open_project.cmdまたはopen_project_gui.cmdのアイコンをクリックします。
+オプションに-reportを指定した場合は、使用率レポート、タイミングレポート、IOレポートを作成します。   
 
-このコマンドファイルを実行すると、現在のディレクトリと同じか、一つ下のディレクトリからxprファイルを探してそれを指定されたバージョンのVivadoで開きます。Vivadoをたくさん入れている方でも、指定したバージョンのVivadoで開くことができます。
+## NahiUpdate (IPのアップデート)
 
-open_project.cmdを実行するとVivadoがテキストモードで開きます。開いたらNahiRunを実行すると論理合成をしてBitファイルが生成されます。
+IPコアのソースを変更した場合、IP StatusをしてRunしたりUpdate IPといった一連の操作は面倒ですが、NahiUpdateコマンドを使用するとダイアログを出すことなくUpdate IPの動作をすべて行います。
 
-[Nahiviva_10]
+```
+NahiUpdate
+```
 
-open_project_gui.cmdを実行すると見慣れたVivadoのGUIが起動します。
+## NahiShowAllProperty (プロパティを全部見る)
+オブジェクトにはいろいろなプロパティがあります。具体的に言うと、クロックの配線、特定のプリミティブ、プロジェクトなど、すべてがオブジェクトです。
+こういったオブジェクトのプロパティを全部見るのがこのコマンドです。
 
-GUIの起動は時間がかかるので、論理合成をするだけならテキストモードで実行したほうが早いでしょう。
+```
+NahiShowAllProperty　[オブジェクト名]
+```
+
+## NahiSave (アーカイブ保存)
+Vivadoのプロジェクトをアーカイブとしてを保存し、BDやMIG、IPなどのGUI生成オブジェクトも含めてTCL形式で保存します。
+```
+NahiSave
+```
+これによってすべてのVivadoプロジェクトがテキスト化されるため、gitでのバージョン管理が容易になります。
+
+## NahiConfigByComments (コメントからのIPカスタマイズ)
+たくさんのIPコアを作っているとカスタマイズが面倒になることが多々あります。例えば、ADコンバータを使った計測システムでは、ADCインタフェースモジュール、ピーク検出モジュール、DMAモジュールなど様々なモジュール間をAXI Stereamでインターフェースするとします。
+
+この場合、ADCの分解能を変更したい場合、すべてのIPのGUI設定画面をひらき、パラメータを変更することになりますが設定漏れがあると論理合成中にエラーとなってしまうでしょう。
+
+また、FPGAのバージョン番号などをIPにパラメータとして設定した場合、わざわざIPの設定画面を開いて変更するのも面倒です。
+
+そこで、Vivadoのコメント機能を使ってパラメータを一括で変更できるようにしました。
+
+```
+NahiConfigByComments
+```
+
+## NahiGenMcs (MCSファイルの作成)
+BitStreamをSPI ROMに書き込むためのMCSファイルに変換します。
+
+```
+NahiGenMcs [オプション]
+```
+オプションに-x1 -x2 -qspiを付けると、SPI ROMをx1、x2、-4でコンフィグします。デフォルトではx2です。
+ｖｖｖｖ
+オプションに-4m -8m -16m -32m -64m -128mを付けると、ROMのサイズがあふれた場合に知らせてくれます。デフォルトでは32M(N25Q256相当)です。
+
+## NahiCopyBit (Bitファイルを表に出す)
+
+VivadoではBitStreamは、\<project>\<project>.runs\impl_1/<project>.bit という深いディレクトリにBitStreamが作られます。これを表のディレクトリにコピーするのがこのコマンドです。
+```
+NahiCopyBit
+```
  
 # Author
-なひたふ
+なひたふ Twitter: @nahitafu
+
+特殊電子回路株式会社
+
 # License
-まだ決めていない
+未定(BSDかな)
