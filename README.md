@@ -55,8 +55,10 @@ VivadoのXPRファイルがあるフォルダの1つ上のフォルダに、Nahi
 ここで設定したパスの、指定したバージョンのVivadoを使用するようになります。
 
 
-# 起動方法
 <a id="howtorun"></a>
+
+# 起動方法
+
 open_project_gui.cmdをクリックします。  
 
 ![](docimg/nv3.png)
@@ -86,8 +88,10 @@ source ./nahiviva.tcl
 
 VivadoのTclコンソールに以下のコマンドを入力することで、様々な強化機能が使えるようになります。
 
-## NahiRun　(論理合成・配置配線)
 <a id="nahirun"></a>
+
+## NahiRun　(論理合成・配置配線)
+
 このコマンドは、Vivadoの論理合成を行います。
 ```
 NahiRun [オプション]
@@ -102,8 +106,10 @@ NahiRun [オプション]
 
 ---
 
-## NahiUpdate (IPのアップデート)
 <a id="nahiupdate"></a>
+
+## NahiUpdate (IPのアップデート)
+
 IPコアのソースを変更した場合、IP StatusをしてRunしたりUpdate IPといった一連の操作は面倒ですが、NahiUpdateコマンドを使用するとダイアログを出すことなくUpdate IPの動作をすべて行います。
 
 ```
@@ -112,8 +118,10 @@ NahiUpdate
 
 ---
 
-## NahiShowAllProperty (プロパティを全部見る)
 <a id="nahishowallproperty"></a>
+
+## NahiShowAllProperty (プロパティを全部見る)
+
 ```
 NahiShowAllProperty　[オブジェクト名]
 ```
@@ -143,8 +151,10 @@ WAVEFORM <= 0.000 2.000
 
 ---
 
-## NahiSave (アーカイブ保存)
 <a id="nahisave"></a>
+
+## NahiSave (アーカイブ保存)
+
 Vivadoのプロジェクトをアーカイブとして保存し、BDやMIG、IPなどのGUI生成オブジェクトも含めてTCL形式で保存します。
 
 ```
@@ -157,8 +167,10 @@ NahiSave
 
 ---
 
-## NahiConfigByComments (コメントからのIPカスタマイズ)
 <a id="nahiconfigbycomments"></a>
+
+## NahiConfigByComments (コメントからのIPカスタマイズ)
+
 このコマンドは、VivadoのBlock Design上に配置されたコメントを利用して、IPのパラメータを一括変更します。
 ```
 NahiConfigByComments
@@ -219,8 +231,10 @@ change /CPU/reg_files_0 : CONFIG.FPGA_VERSION <= 0x20052201
 
 ---
 
-## NahiGenMcs (MCSファイルの作成)
 <a id="nahigenmcs"></a>
+
+## NahiGenMcs (MCSファイルの作成)
+
 BitStreamをSPI ROMに書き込むためのMCSファイルに変換します。
 
 ```
@@ -236,8 +250,10 @@ NahiGenMcs [オプション]
 
 ---
 
-## NahiCopyBit (Bitファイルを表に出す)
 <a id="nahicopybit"></a>
+
+## NahiCopyBit (Bitファイルを表に出す)
+
 VivadoではBitStreamは、\<project>\<project>.runs\impl_1/<project>.bit という深いディレクトリにBitStreamが作られます。これをNahiVivaがあるディレクトリにコピーするのがこのコマンドです。
 ```
 NahiCopyBit
