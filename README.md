@@ -37,6 +37,7 @@ NahiVivaはそんな悩みを解決する、Vivadoの操作のための便利Tcl
 
 # 動作環境
 - XILINX Vivado 2017.4 2018.1 2018.2 2018.3 2018.4 2019.1 2019.2 2020.1 2020.2
+- Artix-7 Spartan-6 Kintex-7 Spartan-7 ZYNQ ZYNQMP
 - Windows 10で動作確認済み (Linuxはまた別途)
 
 # セットアップ
@@ -133,7 +134,7 @@ NahiShowAllProperty　[オブジェクト名]
 ### 実行例
 
 ```
-NahiShowAllProperty [get_clocks clk_fpga_0]
+% NahiShowAllProperty [get_clocks clk_fpga_0]
 CLASS <= clock
 FILE_NAME <= d:/naitou/np1068/CosmozFPGA2019/vivado/vivado.srcs/sources_1/bd/cosmoz_main/ip/cosmoz_main_processing_system7_0_0/cosmoz_main_processing_system7_0_0.xdc
 INPUT_JITTER <= 0.120
@@ -206,9 +207,9 @@ CONFIGS:[<Key>=<値>[,<Key>=<値>[,<Key>=<値> ...]]]
 
 そこで、Vivadoのコメント機能を使ってパラメータを一括で変更できるようにしました。
 
-実行令
+実行例
 ```
-NahiConfigByComments
+% NahiConfigByComments
 ProcessComment:MAX_ADCCH <= 8
 change /CPU/reg_files_0 : CONFIG.MAX_ADCCH <= 8
 change /SignalProcess/TRIGGER/trigunit_0 : CONFIG.MAX_ADCCH <= 8
@@ -240,13 +241,38 @@ BitStreamをSPI ROMに書き込むためのMCSファイルに変換します。
 ```
 NahiGenMcs [オプション]
 ```
-オプションは特に指定する必要はありませんが、SPI ROMがx1やx4構成の場合は指定してください。
+オプションは特に指定する必要はありませんが、SPI ROMがx1やx4構成の場合は指定してください。構成が合っていない場合にはエラーとなります。
 
 * オプションに-x1 -x2 -qspiを付けると、SPI ROMをx1、x2、-4でコンフィグします。デフォルトではx2です。
 
 * オプションに-4m -8m -16m -32m -64m -128mを付けると、ROMのサイズがあふれた場合に知らせてくれます。デフォルトでは32M(N25Q256相当)です。
 
 ![](docimg/nv12.jpg)
+
+### 実行例
+```
+% NahiGenMcs -x1
+write_cfgmem -format MCS
+Command: write_cfgmem -force -format MCS -interface SPIx1 -size 32 -loadbit {up 0x0 D:/naitou/np1068/CosmozFPGA2019/vivado/vivado.runs/impl_1/cosmoz_main_wrapper.bit} -file D:/naitou/np1068/CosmozFPGA2019/vivado.mcs
+Creating config memory files...
+Creating bitstream load up from address 0x00000000
+Loading bitfile D:/naitou/np1068/CosmozFPGA2019/vivado/vivado.runs/impl_1/cosmoz_main_wrapper.bit
+Writing file D:/naitou/np1068/CosmozFPGA2019/vivado.mcs
+Writing log file D:/naitou/np1068/CosmozFPGA2019/vivado.prm
+===================================
+Configuration Memory information
+===================================
+File Format        MCS
+Interface          SPIX1
+Size               32M
+Start Address      0x00000000
+End Address        0x01FFFFFF
+
+Addr1         Addr2         Date                    File(s)
+0x00000000    0x005B3F0B    May 22 17:04:08 2020    D:/naitou/np1068/CosmozFPGA2019/vivado/vivado.runs/impl_1/cosmoz_main_wrapper.bit
+0 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+write_cfgmem completed successfully
+```
 
 ---
 
@@ -262,6 +288,12 @@ NahiCopyBit
 もう、Bitファイルを探してフォルダの奥まで開く必要はありません。
 
 ![](docimg/nv11.png)
+
+### 実行例
+```
+% NahiCopyBit
+Copy D:/naitou/np1068/CosmozFPGA2019/vivado/vivado.runs/impl_1/cosmoz_main_wrapper.bit to D:/naitou/np1068/CosmozFPGA2019/
+```
 
 ---
 
