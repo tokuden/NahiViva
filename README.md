@@ -31,7 +31,7 @@ NahiVivaはそんな悩みを解決する、Vivadoの操作のための便利Tcl
 * [Update-IP作業の自動化](#nahiupdate)
 * [SPI-ROM用のMCSファイル生成](#nahigenmcs)
 * [Vivadoのバージョンを指定して起動](#howtorun)
-* [コメントを利用したIPの一括カスタマイズ](#nahiconfigbycomments)
+* [コメントを利用したIPのパラメータ一括カスタマイズ](#nahiconfigbycomments)
 * [BitStreamを見つけやすいフォルダにコピー](#nahicopybit)
 * [Tcl形式でのプロジェクト保存](#nahisave)
 
@@ -96,13 +96,11 @@ VivadoのTclコンソールに以下のコマンドを入力することで、�
 ```
 NahiRun [オプション]
 ```
-オプションに-updateを指定した場合は、Update IPの動作を一緒に行います。
 
-オプションに-restartを指定した場合は、論理合成済みであっても、最初から論理合成と配置配線を行います。
-
-オプションに-synthを指定した場合は、論理合成のみ行い、配置配線は行いません。
-
-オプションに-reportを指定した場合は、使用率レポート、タイミングレポート、IOレポートを作成します。   
+* オプションに-updateを指定した場合は、Update IPの動作を一緒に行います。
+* オプションに-restartを指定した場合は、論理合成済みであっても、最初から論理合成と配置配線を行います。
+* オプションに-synthを指定した場合は、論理合成のみ行い、配置配線は行いません。
+* オプションに-reportを指定した場合は、使用率レポート、タイミングレポート、IOレポートを作成します。   
 
 ---
 
@@ -110,11 +108,13 @@ NahiRun [オプション]
 
 ## NahiUpdate (IPのアップデート)
 
-IPコアのソースを変更した場合、IP StatusをしてRunしたりUpdate IPといった一連の操作は面倒ですが、NahiUpdateコマンドを使用するとダイアログを出すことなくUpdate IPの動作をすべて行います。
+IPコアのソースを変更した場合、IP StatusをしてRunしたりUpdate IPといった一連の操作は面倒ですが、NahiUpdateコマンドを使用するとダイアログを出すことなくUpdate IPの動作をすべて行ってくれます。
 
 ```
 NahiUpdate
 ```
+
+![](docimg/nv13.png)
 
 ---
 
